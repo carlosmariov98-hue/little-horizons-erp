@@ -13,7 +13,7 @@ import java.sql.SQLException;
  * The configuration is read only once. Every call to {@link #getConnection()} returns a NEW connection
  * that the caller must close, normally with try-with-resources.
  */
-public final class DatabaseConnection {
+public final class DatabaseConnection implements ConnectionProvider {
 
     private static DatabaseConnection instance;
 
@@ -47,6 +47,7 @@ public final class DatabaseConnection {
      * @return an open connection; the caller is responsible for closing it
      * @throws DatabaseException if the connection cannot be established
      */
+    @Override
     public Connection getConnection() throws DatabaseException {
         try {
             return DriverManager.getConnection(url, user, password);
