@@ -45,11 +45,11 @@ public class AppConfig {
         try (Reader reader = new InputStreamReader(new FileInputStream(filePath), StandardCharsets.UTF_8)) {
             properties.load(reader);
         } catch (FileNotFoundException e) {
-            throw new ConfigurationException("Configuration file '" + filePath + "' was not found. "
-                    + "Copy 'db.properties.example' to 'db.properties' in the project root "
-                    + "and fill in your MySQL credentials.", e);
+            throw new ConfigurationException("No se encontró el archivo de configuración '" + filePath + "'. "
+                    + "Copie 'db.properties.example' como 'db.properties' en la raíz del proyecto "
+                    + "y escriba sus credenciales de MySQL.", e);
         } catch (IOException e) {
-            throw new ConfigurationException("Configuration file '" + filePath + "' could not be read.", e);
+            throw new ConfigurationException("No se pudo leer el archivo de configuración '" + filePath + "'.", e);
         }
     }
 
@@ -63,7 +63,7 @@ public class AppConfig {
     public String getRequired(String key) throws ConfigurationException {
         String value = properties.getProperty(key);
         if (value == null || value.trim().isEmpty()) {
-            throw new ConfigurationException("Property '" + key + "' is missing or empty in '" + filePath + "'.");
+            throw new ConfigurationException("La propiedad '" + key + "' falta o está vacía en '" + filePath + "'.");
         }
         return value.trim();
     }

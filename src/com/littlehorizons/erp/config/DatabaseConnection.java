@@ -52,8 +52,8 @@ public final class DatabaseConnection {
             return DriverManager.getConnection(url, user, password);
         } catch (SQLException e) {
             AppLogger.getInstance().error("Could not open a database connection.", e);
-            throw new DatabaseException("Could not connect to the database. "
-                    + "Check that MySQL is running and that db.properties is correct.", e);
+            throw new DatabaseException("No se pudo conectar con la base de datos. "
+                    + "Verifique que MySQL esté en ejecución y que db.properties sea correcto.", e);
         }
     }
 }
