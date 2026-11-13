@@ -194,7 +194,7 @@ public class Student {
     /**
      * Calculates the current age of the student.
      *
-     * @return completed years between the birth date and today
+     * @return completed years between the birth date and today.
      */
     public int getAge() {
         return getAgeOn(LocalDate.now());
