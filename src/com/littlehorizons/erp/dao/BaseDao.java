@@ -1,7 +1,9 @@
 package com.littlehorizons.erp.dao;
 
 import com.littlehorizons.erp.config.ConnectionProvider;
+import com.littlehorizons.erp.exception.BusinessRuleException;
 import com.littlehorizons.erp.exception.DatabaseException;
+import com.littlehorizons.erp.exception.EntityNotFoundException;
 import com.littlehorizons.erp.util.AppLogger;
 
 import java.sql.Connection;
@@ -21,8 +23,62 @@ public abstract class BaseDao {
         this.connectionProvider = connectionProvider;
     }
 
+    /**
+     * Work that must be executed inside one database transaction.
+     *
+     * @param <T> type of the value returned by the work
+     */
+    @FunctionalInterface
+    protected interface TransactionalAction<T> {
+        T execute(Connection connection) throws SQLException, BusinessRuleException, EntityNotFoundException;
+    }
+
     protected Connection getConnection() throws DatabaseException {
         return connectionProvider.getConnection();
+    }
+
+    /**
+     * Runs the given work as an atomic transaction: if anything fails, every change is rolled back,
+     * so the database never keeps half of an operation.
+     *
+     * @param technicalMessage message written in the log when a SQL error happens
+     * @param userMessage      message shown to the user when a SQL error happens
+     * @param action           the work to execute with the transaction connection
+     * @param <T>              type of the value returned by the work
+     * @return the value returned by the work
+     * @throws BusinessRuleException   if the work violates a business rule (everything is rolled back)
+     * @throws EntityNotFoundException if the work refers to a record that does not exist
+     * @throws DatabaseException       if a technical database error happens
+     */
+    protected <T> T inTransaction(String technicalMessage, String userMessage, TransactionalAction<T> action)
+            throws DatabaseException, BusinessRuleException, EntityNotFoundException {
+        try (Connection connection = getConnection()) {
+            connection.setAutoCommit(false);
+            try {
+                T result = action.execute(connection);
+                connection.commit();
+                return result;
+            } catch (BusinessRuleException | EntityNotFoundException e) {
+                rollbackQuietly(connection);
+                throw e;
+            } catch (SQLException e) {
+                rollbackQuietly(connection);
+                throw e;
+            } catch (RuntimeException e) {
+                rollbackQuietly(connection);
+                throw e;
+            }
+        } catch (SQLException e) {
+            throw databaseError(technicalMessage, userMessage, e);
+        }
+    }
+
+    private void rollbackQuietly(Connection connection) {
+        try {
+            connection.rollback();
+        } catch (SQLException e) {
+            AppLogger.getInstance().error("Rollback failed.", e);
+        }
     }
 
     /**

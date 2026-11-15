@@ -15,7 +15,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Data Access Object for the table "estudiantes".
@@ -26,10 +28,11 @@ public class StudentDao extends BaseDao {
 
     private static final int MYSQL_DUPLICATE_ENTRY = 1062;
 
-    private static final String COLUMNS = "id_estudiante, tipo_documento, numero_documento, primer_nombre, "
-            + "segundo_nombre, primer_apellido, segundo_apellido, fecha_nacimiento, genero, direccion, telefono, "
-            + "correo_electronico, tipo_sangre, alergias, condiciones_medicas, fecha_ingreso, estado";
-    private static final String SELECT_ALL = "SELECT " + COLUMNS + " FROM estudiantes";
+    private static final String[] COLUMN_LIST = {"id_estudiante", "tipo_documento", "numero_documento",
+            "primer_nombre", "segundo_nombre", "primer_apellido", "segundo_apellido", "fecha_nacimiento", "genero",
+            "direccion", "telefono", "correo_electronico", "tipo_sangre", "alergias", "condiciones_medicas",
+            "fecha_ingreso", "estado"};
+    private static final String SELECT_ALL = "SELECT " + String.join(", ", COLUMN_LIST) + " FROM estudiantes";
     private static final String ORDER_BY_NAME = " ORDER BY primer_apellido, segundo_apellido, primer_nombre";
 
     private static final String INSERT = "INSERT INTO estudiantes (tipo_documento, numero_documento, "
@@ -41,6 +44,16 @@ public class StudentDao extends BaseDao {
             + "fecha_nacimiento = ?, genero = ?, direccion = ?, telefono = ?, correo_electronico = ?, "
             + "tipo_sangre = ?, alergias = ?, condiciones_medicas = ?, fecha_ingreso = ?, estado = ? "
             + "WHERE id_estudiante = ?";
+
+    /**
+     * Returns the student columns prefixed with a table alias, for queries that join other tables.
+     *
+     * @param alias alias of the "estudiantes" table in the query
+     * @return the comma separated column list
+     */
+    static String columnsWithAlias(String alias) {
+        return Arrays.stream(COLUMN_LIST).map(column -> alias + "." + column).collect(Collectors.joining(", "));
+    }
 
     public StudentDao(ConnectionProvider connectionProvider) {
         super(connectionProvider);
@@ -55,8 +68,20 @@ public class StudentDao extends BaseDao {
      * @throws DatabaseException     if the student cannot be saved
      */
     public int insert(Student student) throws DatabaseException, BusinessRuleException {
-        try (Connection connection = getConnection();
-             PreparedStatement statement = connection.prepareStatement(INSERT, Statement.RETURN_GENERATED_KEYS)) {
+        try (Connection connection = getConnection()) {
+            return insert(connection, student);
+        } catch (SQLException e) {
+            throw databaseError("Could not insert student " + student.getDocumentNumber() + ".",
+                    "No se pudo guardar el estudiante.", e);
+        }
+    }
+
+    /**
+     * Saves a new student using an existing connection, so it can take part in a larger transaction.
+     * SQL errors other than a duplicate document are thrown as they are.
+     */
+    int insert(Connection connection, Student student) throws SQLException, BusinessRuleException {
+        try (PreparedStatement statement = connection.prepareStatement(INSERT, Statement.RETURN_GENERATED_KEYS)) {
             bindStudent(statement, student);
             statement.executeUpdate();
             try (ResultSet keys = statement.getGeneratedKeys()) {
@@ -70,8 +95,7 @@ public class StudentDao extends BaseDao {
                 throw new BusinessRuleException("Ya existe un estudiante con el documento "
                         + student.getDocumentNumber() + ".", e);
             }
-            throw databaseError("Could not insert student " + student.getDocumentNumber() + ".",
-                    "No se pudo guardar el estudiante.", e);
+            throw e;
         }
     }
 
@@ -286,7 +310,7 @@ public class StudentDao extends BaseDao {
         statement.setString(16, student.getStatus() == null ? null : student.getStatus().getLabel());
     }
 
-    private Student mapRow(ResultSet resultSet) throws SQLException {
+    Student mapRow(ResultSet resultSet) throws SQLException {
         Student student = new Student();
         student.setStudentId(resultSet.getInt("id_estudiante"));
         try {
