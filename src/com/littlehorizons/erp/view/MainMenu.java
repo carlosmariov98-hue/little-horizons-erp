@@ -6,10 +6,14 @@ package com.littlehorizons.erp.view;
 public class MainMenu extends BaseMenu {
 
     private final StudentMenu studentMenu;
+    private final AcademicMenu academicMenu;
+    private final TeacherMenu teacherMenu;
 
-    public MainMenu(InputReader input, StudentMenu studentMenu) {
+    public MainMenu(InputReader input, StudentMenu studentMenu, AcademicMenu academicMenu, TeacherMenu teacherMenu) {
         super(input);
         this.studentMenu = studentMenu;
+        this.academicMenu = academicMenu;
+        this.teacherMenu = teacherMenu;
     }
 
     public void run() {
@@ -30,6 +34,12 @@ public class MainMenu extends BaseMenu {
             switch (input.readMenuOption("Seleccione una opción: ", 1, 8)) {
                 case 1:
                     studentMenu.run();
+                    break;
+                case 2:
+                    academicMenu.run();
+                    break;
+                case 3:
+                    teacherMenu.run();
                     break;
                 case 8:
                     exit = true;

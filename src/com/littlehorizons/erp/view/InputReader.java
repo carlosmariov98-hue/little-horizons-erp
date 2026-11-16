@@ -3,7 +3,9 @@ package com.littlehorizons.erp.view;
 import com.littlehorizons.erp.exception.BusinessRuleException;
 import com.littlehorizons.erp.exception.ErpException;
 import com.littlehorizons.erp.exception.ValidationException;
+import com.littlehorizons.erp.util.DateUtils;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Scanner;
 import java.util.function.Function;
@@ -104,6 +106,46 @@ public class InputReader {
             }
             Console.error("Opción inválida. Ingrese un número entre " + min + " y " + max + ".");
         }
+    }
+
+    /**
+     * Reads a whole number inside a range, asking again until it is valid.
+     *
+     * @param prompt text shown to the user
+     * @param min    lowest valid value
+     * @param max    highest valid value
+     * @return the number typed by the user
+     * @throws ErpException never in practice; required by the parser signature
+     */
+    public int readInt(String prompt, int min, int max) throws ErpException {
+        return readValid(prompt, text -> {
+            try {
+                int value = Integer.parseInt(text);
+                if (value >= min && value <= max) {
+                    return value;
+                }
+            } catch (NumberFormatException e) {
+                // handled below: the same message is shown for any invalid entry
+            }
+            throw new ValidationException("Ingrese un número entero entre " + min + " y " + max + ".");
+        });
+    }
+
+    /**
+     * Reads a date in dd/mm/yyyy format. An empty answer returns the default date.
+     *
+     * @param prompt      text shown to the user
+     * @param defaultDate date used when the user just presses Enter (null to make the date mandatory)
+     * @return the date
+     * @throws ErpException never in practice; required by the parser signature
+     */
+    public LocalDate readDate(String prompt, LocalDate defaultDate) throws ErpException {
+        return readValid(prompt, text -> {
+            if (text.isEmpty() && defaultDate != null) {
+                return defaultDate;
+            }
+            return DateUtils.parse(text);
+        });
     }
 
     /**

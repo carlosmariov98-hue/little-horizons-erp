@@ -7,9 +7,13 @@ import com.littlehorizons.erp.exception.EntityNotFoundException;
 import com.littlehorizons.erp.util.AppLogger;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.Date;
 import java.sql.SQLException;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Common behaviour shared by all DAOs: obtaining connections, reporting SQL errors
@@ -31,6 +35,122 @@ public abstract class BaseDao {
     @FunctionalInterface
     protected interface TransactionalAction<T> {
         T execute(Connection connection) throws SQLException, BusinessRuleException, EntityNotFoundException;
+    }
+
+    /**
+     * Sets the parameters of a PreparedStatement.
+     */
+    @FunctionalInterface
+    protected interface Binder {
+        void bind(PreparedStatement statement) throws SQLException;
+    }
+
+    /**
+     * Converts the current row of a ResultSet into an object.
+     *
+     * @param <T> type of the object
+     */
+    @FunctionalInterface
+    protected interface RowMapper<T> {
+        T map(ResultSet resultSet) throws SQLException;
+    }
+
+    /**
+     * Runs a SELECT and converts every row into an object. Connection, statement and result set are closed here.
+     *
+     * @param sql              the query, with ? placeholders
+     * @param binder           sets the placeholders
+     * @param mapper           converts each row
+     * @param technicalMessage message written in the log if the query fails
+     * @param userMessage      message shown to the user if the query fails
+     * @param <T>              type of the objects
+     * @return the list of objects (empty when there are no rows)
+     * @throws DatabaseException if the query fails
+     */
+    protected <T> List<T> queryList(String sql, Binder binder, RowMapper<T> mapper, String technicalMessage,
+                                    String userMessage) throws DatabaseException {
+        try (Connection connection = getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            binder.bind(statement);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                List<T> result = new ArrayList<>();
+                while (resultSet.next()) {
+                    result.add(mapper.map(resultSet));
+                }
+                return result;
+            }
+        } catch (SQLException e) {
+            throw databaseError(technicalMessage, userMessage, e);
+        }
+    }
+
+    /**
+     * Runs a SELECT COUNT(*) style query and returns the first number.
+     */
+    protected int queryCount(String sql, Binder binder, String technicalMessage, String userMessage)
+            throws DatabaseException {
+        List<Integer> result = queryList(sql, binder, resultSet -> resultSet.getInt(1), technicalMessage, userMessage);
+        return result.isEmpty() ? 0 : result.get(0);
+    }
+
+    /**
+     * Runs an INSERT, UPDATE or DELETE and returns the number of rows changed.
+     * A duplicate key becomes a BusinessRuleException and a missing reference an EntityNotFoundException.
+     *
+     * @param sql              the statement, with ? placeholders
+     * @param binder           sets the placeholders
+     * @param duplicateMessage message shown to the user when a unique key is violated
+     * @param technicalMessage message written in the log if the statement fails
+     * @param userMessage      message shown to the user if the statement fails
+     * @return the number of rows changed
+     * @throws BusinessRuleException   if a unique key is violated
+     * @throws EntityNotFoundException if a referenced record does not exist
+     * @throws DatabaseException       if a technical error happens
+     */
+    protected int executeUpdate(String sql, Binder binder, String duplicateMessage, String technicalMessage,
+                                String userMessage)
+            throws DatabaseException, BusinessRuleException, EntityNotFoundException {
+        try (Connection connection = getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            binder.bind(statement);
+            return statement.executeUpdate();
+        } catch (SQLException e) {
+            throw translate(e, duplicateMessage, technicalMessage, userMessage);
+        }
+    }
+
+    /**
+     * Checks that a record exists. The table and column names are constants written in the DAOs, never user input.
+     *
+     * @param table           table name
+     * @param idColumn        primary key column
+     * @param id              value of the key
+     * @param notFoundMessage message shown to the user when there is no such record
+     * @throws EntityNotFoundException if the record does not exist
+     * @throws DatabaseException       if the query fails
+     */
+    protected void requireExists(String table, String idColumn, int id, String notFoundMessage)
+            throws DatabaseException, EntityNotFoundException {
+        int count = queryCount("SELECT COUNT(*) FROM " + table + " WHERE " + idColumn + " = ?",
+                statement -> statement.setInt(1, id), "Could not check " + table + " id " + id + ".",
+                "No se pudo verificar el registro.");
+        if (count == 0) {
+            throw new EntityNotFoundException(notFoundMessage);
+        }
+    }
+
+    private static final int MYSQL_DUPLICATE_ENTRY = 1062;
+    private static final int MYSQL_FOREIGN_KEY_FAILS = 1452;
+
+    private DatabaseException translate(SQLException e, String duplicateMessage, String technicalMessage,
+                                        String userMessage) throws BusinessRuleException, EntityNotFoundException {
+        if (e.getErrorCode() == MYSQL_DUPLICATE_ENTRY) {
+            throw new BusinessRuleException(duplicateMessage, e);
+        }
+        if (e.getErrorCode() == MYSQL_FOREIGN_KEY_FAILS) {
+            throw new EntityNotFoundException("Alguno de los datos referenciados no existe.");
+        }
+        return databaseError(technicalMessage, userMessage, e);
     }
 
     protected Connection getConnection() throws DatabaseException {

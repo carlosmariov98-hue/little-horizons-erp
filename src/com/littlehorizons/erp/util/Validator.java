@@ -86,6 +86,21 @@ public final class Validator {
         return requirePhone(value, label);
     }
 
+    public static String requireEmail(String value) throws ValidationException {
+        String text = optionalEmail(value);
+        if (text == null) {
+            throw new ValidationException("El campo 'Correo electrónico' es obligatorio.");
+        }
+        return text;
+    }
+
+    public static int requireIntInRange(int value, int min, int max, String label) throws ValidationException {
+        if (value < min || value > max) {
+            throw new ValidationException("El campo '" + label + "' debe estar entre " + min + " y " + max + ".");
+        }
+        return value;
+    }
+
     public static String optionalEmail(String value) throws ValidationException {
         String text = optionalText(value, "Correo electrónico", 100);
         if (text != null && !text.matches("^[A-Za-z0-9._%+\\-]+@[A-Za-z0-9.\\-]+\\.[A-Za-z]{2,}$")) {
