@@ -3,6 +3,8 @@ package com.littlehorizons.erp;
 import com.littlehorizons.erp.config.DatabaseConnection;
 import com.littlehorizons.erp.controller.AcademicController;
 import com.littlehorizons.erp.controller.AttendanceController;
+import com.littlehorizons.erp.controller.ClubController;
+import com.littlehorizons.erp.controller.EventController;
 import com.littlehorizons.erp.controller.GradeController;
 import com.littlehorizons.erp.controller.GuardianController;
 import com.littlehorizons.erp.controller.PaymentConceptController;
@@ -13,7 +15,11 @@ import com.littlehorizons.erp.controller.TeachingRules;
 import com.littlehorizons.erp.dao.AcademicRecordDao;
 import com.littlehorizons.erp.dao.AssignmentDao;
 import com.littlehorizons.erp.dao.AttendanceDao;
+import com.littlehorizons.erp.dao.ClubDao;
+import com.littlehorizons.erp.dao.ClubMembershipDao;
 import com.littlehorizons.erp.dao.EnrollmentDao;
+import com.littlehorizons.erp.dao.EventDao;
+import com.littlehorizons.erp.dao.EventParticipantDao;
 import com.littlehorizons.erp.dao.GradeDao;
 import com.littlehorizons.erp.dao.GuardianDao;
 import com.littlehorizons.erp.dao.InvoiceDao;
@@ -30,8 +36,11 @@ import com.littlehorizons.erp.util.AppLogger;
 import com.littlehorizons.erp.util.InvoiceFileWriter;
 import com.littlehorizons.erp.view.AcademicMenu;
 import com.littlehorizons.erp.view.AttendanceMenu;
+import com.littlehorizons.erp.view.ClubMenu;
 import com.littlehorizons.erp.view.Console;
 import com.littlehorizons.erp.view.EnrollmentMenu;
+import com.littlehorizons.erp.view.EventMenu;
+import com.littlehorizons.erp.view.ExtracurricularMenu;
 import com.littlehorizons.erp.view.FinanceMenu;
 import com.littlehorizons.erp.view.GradeMenu;
 import com.littlehorizons.erp.view.InputReader;
@@ -72,6 +81,10 @@ public class Main {
             PaymentConceptDao conceptDao = new PaymentConceptDao(database);
             PaymentDao paymentDao = new PaymentDao(database);
             InvoiceDao invoiceDao = new InvoiceDao(database);
+            ClubDao clubDao = new ClubDao(database);
+            ClubMembershipDao clubMembershipDao = new ClubMembershipDao(database);
+            EventDao eventDao = new EventDao(database);
+            EventParticipantDao eventParticipantDao = new EventParticipantDao(database);
 
             StudentController studentController = new StudentController(studentDao, studentGuardianDao);
             GuardianController guardianController = new GuardianController(guardianDao, studentGuardianDao);
@@ -86,6 +99,9 @@ public class Main {
             PaymentConceptController conceptController = new PaymentConceptController(conceptDao);
             PaymentController paymentController = new PaymentController(paymentDao, invoiceDao, conceptDao,
                     studentDao, studentGuardianDao, guardianDao, new InvoiceFileWriter(Paths.get("invoices")));
+            ClubController clubController = new ClubController(clubDao, clubMembershipDao, studentDao, teacherDao);
+            EventController eventController = new EventController(eventDao, eventParticipantDao, studentDao,
+                    teacherDao);
 
             InputReader input = new InputReader(new Scanner(System.in, StandardCharsets.UTF_8));
             StudentMenu studentMenu = new StudentMenu(input, studentController, guardianController);
@@ -95,9 +111,13 @@ public class Main {
                     new GradeMenu(input, gradeController, academicController, studentController, teacherController),
                     new AttendanceMenu(input, attendanceController, academicController, studentController,
                             teacherController));
+            ExtracurricularMenu extracurricularMenu = new ExtracurricularMenu(input,
+                    new ClubMenu(input, clubController, studentController, teacherController),
+                    new EventMenu(input, eventController, studentController, teacherController));
             FinanceMenu financeMenu = new FinanceMenu(input, paymentController, conceptController, studentController,
                     guardianController, new PaymentConceptMenu(input, conceptController));
-            new MainMenu(input, studentMenu, academicMenu, teacherMenu, financeMenu).run();
+            new MainMenu(input, studentMenu, academicMenu, teacherMenu, extracurricularMenu,
+                    financeMenu).run();
         } catch (ConfigurationException | DatabaseException e) {
             Console.error(e.getMessage());
         } catch (NoSuchElementException e) {

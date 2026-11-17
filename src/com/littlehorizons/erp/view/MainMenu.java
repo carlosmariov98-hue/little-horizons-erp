@@ -8,14 +8,16 @@ public class MainMenu extends BaseMenu {
     private final StudentMenu studentMenu;
     private final AcademicMenu academicMenu;
     private final TeacherMenu teacherMenu;
+    private final ExtracurricularMenu extracurricularMenu;
     private final FinanceMenu financeMenu;
 
     public MainMenu(InputReader input, StudentMenu studentMenu, AcademicMenu academicMenu, TeacherMenu teacherMenu,
-                    FinanceMenu financeMenu) {
+                    ExtracurricularMenu extracurricularMenu, FinanceMenu financeMenu) {
         super(input);
         this.studentMenu = studentMenu;
         this.academicMenu = academicMenu;
         this.teacherMenu = teacherMenu;
+        this.extracurricularMenu = extracurricularMenu;
         this.financeMenu = financeMenu;
     }
 
@@ -43,6 +45,9 @@ public class MainMenu extends BaseMenu {
                     break;
                 case 3:
                     teacherMenu.run();
+                    break;
+                case 4:
+                    extracurricularMenu.run();
                     break;
                 case 5:
                     financeMenu.run();
