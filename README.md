@@ -2,8 +2,8 @@
 
 Sistema de gestión educativa por consola para el Colegio Little Horizons. Administra estudiantes, acudientes, profesores, matrículas, notas, asistencia, pagos con factura, clubes, eventos, recursos con préstamos y reportes. Está hecho en **Java 17**, **MySQL 8** y **JDBC puro**, sin frameworks, con arquitectura **MVC**.
 
-- **Autor:** [NOMBRE COMPLETO]
-- **Repositorio:** [URL DEL REPOSITORIO]
+- **Autor:** Carlos Mario velasquez
+- **Repositorio:** https://github.com/carlosmariov98-hue/little-horizons-erp.git
 - **Entrega:** 17 de noviembre de 2026
 
 ---
