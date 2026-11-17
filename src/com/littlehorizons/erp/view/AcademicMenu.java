@@ -5,11 +5,14 @@ public class AcademicMenu extends BaseMenu {
 
     private final EnrollmentMenu enrollmentMenu;
     private final GradeMenu gradeMenu;
+    private final AttendanceMenu attendanceMenu;
 
-    public AcademicMenu(InputReader input, EnrollmentMenu enrollmentMenu, GradeMenu gradeMenu) {
+    public AcademicMenu(InputReader input, EnrollmentMenu enrollmentMenu, GradeMenu gradeMenu,
+                        AttendanceMenu attendanceMenu) {
         super(input);
         this.enrollmentMenu = enrollmentMenu;
         this.gradeMenu = gradeMenu;
+        this.attendanceMenu = attendanceMenu;
     }
 
     public void run() {
@@ -27,11 +30,13 @@ public class AcademicMenu extends BaseMenu {
                 case 2:
                     gradeMenu.run();
                     break;
+                case 3:
+                    attendanceMenu.run();
+                    break;
                 case 0:
                     back = true;
                     break;
                 default:
-                    Console.info("Esta opción estará disponible próximamente.");
                     break;
             }
         }

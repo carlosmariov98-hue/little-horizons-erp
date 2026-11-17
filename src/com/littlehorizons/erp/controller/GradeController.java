@@ -1,20 +1,16 @@
 package com.littlehorizons.erp.controller;
 
 import com.littlehorizons.erp.dao.AcademicRecordDao;
-import com.littlehorizons.erp.dao.AssignmentDao;
 import com.littlehorizons.erp.dao.StudentDao;
 import com.littlehorizons.erp.dao.SubjectEnrollmentDao;
-import com.littlehorizons.erp.dao.TeacherDao;
 import com.littlehorizons.erp.exception.BusinessRuleException;
 import com.littlehorizons.erp.exception.DatabaseException;
 import com.littlehorizons.erp.exception.EntityNotFoundException;
 import com.littlehorizons.erp.exception.ErpException;
 import com.littlehorizons.erp.exception.ValidationException;
 import com.littlehorizons.erp.model.AcademicRecord;
-import com.littlehorizons.erp.model.Teacher;
 import com.littlehorizons.erp.model.enums.AcademicPeriod;
 import com.littlehorizons.erp.model.enums.EnrollmentStatus;
-import com.littlehorizons.erp.model.enums.TeacherStatus;
 import com.littlehorizons.erp.util.Validator;
 
 import java.math.BigDecimal;
@@ -39,16 +35,14 @@ public class GradeController {
 
     private final AcademicRecordDao recordDao;
     private final StudentDao studentDao;
-    private final TeacherDao teacherDao;
-    private final AssignmentDao assignmentDao;
+    private final TeachingRules teachingRules;
     private final SubjectEnrollmentDao subjectEnrollmentDao;
 
-    public GradeController(AcademicRecordDao recordDao, StudentDao studentDao, TeacherDao teacherDao,
-                           AssignmentDao assignmentDao, SubjectEnrollmentDao subjectEnrollmentDao) {
+    public GradeController(AcademicRecordDao recordDao, StudentDao studentDao, TeachingRules teachingRules,
+                           SubjectEnrollmentDao subjectEnrollmentDao) {
         this.recordDao = recordDao;
         this.studentDao = studentDao;
-        this.teacherDao = teacherDao;
-        this.assignmentDao = assignmentDao;
+        this.teachingRules = teachingRules;
         this.subjectEnrollmentDao = subjectEnrollmentDao;
     }
 
@@ -69,21 +63,6 @@ public class GradeController {
 
     private static void validateYear(int year) throws ValidationException {
         Validator.requireIntInRange(year, FIRST_YEAR, LocalDate.now().getYear() + 1, "Año académico");
-    }
-
-    // a teacher can grade only active subjects he or she teaches that year
-    private void requireTeacherOfSubject(int teacherId, int subjectId, int year) throws ErpException {
-        Teacher teacher = teacherDao.findById(teacherId);
-        if (teacher.getStatus() != TeacherStatus.ACTIVE) {
-            throw new BusinessRuleException("El profesor " + teacher.getFullName() + " no está activo (estado: "
-                    + teacher.getStatus().getLabel() + ").");
-        }
-        boolean teaches = assignmentDao.findByTeacher(teacherId, year).stream()
-                .anyMatch(a -> a.getSubjectId() == subjectId);
-        if (!teaches) {
-            throw new BusinessRuleException("El profesor " + teacher.getFullName()
-                    + " no tiene asignada esa materia en " + year + ".");
-        }
     }
 
     /**
@@ -107,7 +86,7 @@ public class GradeController {
         BigDecimal cleanScore = validateScore(score);
         String cleanObservations = Validator.optionalText(observations, "Observaciones", MAX_OBSERVATIONS);
         studentDao.findById(studentId);
-        requireTeacherOfSubject(teacherId, subjectId, year);
+        teachingRules.requireTeacherOfSubject(teacherId, subjectId, year);
         boolean registered = subjectEnrollmentDao.findByStudent(studentId, year).stream()
                 .anyMatch(i -> i.getSubjectId() == subjectId && i.getPeriod() == period
                         && i.getStatus() == EnrollmentStatus.ACTIVE);
@@ -145,7 +124,7 @@ public class GradeController {
         validateYear(year);
         BigDecimal cleanScore = validateScore(score);
         String cleanObservations = Validator.optionalText(observations, "Observaciones", MAX_OBSERVATIONS);
-        requireTeacherOfSubject(teacherId, subjectId, year);
+        teachingRules.requireTeacherOfSubject(teacherId, subjectId, year);
         AcademicRecord record = recordDao.find(studentId, subjectId, year, period).orElseThrow(
                 () -> new EntityNotFoundException("El estudiante no tiene nota en esa materia para el período "
                         + period.getLabel() + " de " + year + "."));

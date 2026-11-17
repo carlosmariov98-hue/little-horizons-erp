@@ -2,12 +2,15 @@ package com.littlehorizons.erp;
 
 import com.littlehorizons.erp.config.DatabaseConnection;
 import com.littlehorizons.erp.controller.AcademicController;
+import com.littlehorizons.erp.controller.AttendanceController;
 import com.littlehorizons.erp.controller.GradeController;
 import com.littlehorizons.erp.controller.GuardianController;
 import com.littlehorizons.erp.controller.StudentController;
 import com.littlehorizons.erp.controller.TeacherController;
+import com.littlehorizons.erp.controller.TeachingRules;
 import com.littlehorizons.erp.dao.AcademicRecordDao;
 import com.littlehorizons.erp.dao.AssignmentDao;
+import com.littlehorizons.erp.dao.AttendanceDao;
 import com.littlehorizons.erp.dao.EnrollmentDao;
 import com.littlehorizons.erp.dao.GradeDao;
 import com.littlehorizons.erp.dao.GuardianDao;
@@ -20,6 +23,7 @@ import com.littlehorizons.erp.exception.ConfigurationException;
 import com.littlehorizons.erp.exception.DatabaseException;
 import com.littlehorizons.erp.util.AppLogger;
 import com.littlehorizons.erp.view.AcademicMenu;
+import com.littlehorizons.erp.view.AttendanceMenu;
 import com.littlehorizons.erp.view.Console;
 import com.littlehorizons.erp.view.EnrollmentMenu;
 import com.littlehorizons.erp.view.GradeMenu;
@@ -55,21 +59,27 @@ public class Main {
             EnrollmentDao enrollmentDao = new EnrollmentDao(database, studentDao);
             SubjectEnrollmentDao subjectEnrollmentDao = new SubjectEnrollmentDao(database);
             AcademicRecordDao academicRecordDao = new AcademicRecordDao(database);
+            AttendanceDao attendanceDao = new AttendanceDao(database);
 
             StudentController studentController = new StudentController(studentDao, studentGuardianDao);
             GuardianController guardianController = new GuardianController(guardianDao, studentGuardianDao);
             TeacherController teacherController = new TeacherController(teacherDao, assignmentDao, subjectDao);
             AcademicController academicController = new AcademicController(studentDao, gradeDao, subjectDao,
                     enrollmentDao, subjectEnrollmentDao);
-            GradeController gradeController = new GradeController(academicRecordDao, studentDao, teacherDao,
-                    assignmentDao, subjectEnrollmentDao);
+            TeachingRules teachingRules = new TeachingRules(teacherDao, assignmentDao);
+            GradeController gradeController = new GradeController(academicRecordDao, studentDao, teachingRules,
+                    subjectEnrollmentDao);
+            AttendanceController attendanceController = new AttendanceController(attendanceDao, studentDao,
+                    subjectDao, subjectEnrollmentDao, teachingRules);
 
             InputReader input = new InputReader(new Scanner(System.in, StandardCharsets.UTF_8));
             StudentMenu studentMenu = new StudentMenu(input, studentController, guardianController);
             TeacherMenu teacherMenu = new TeacherMenu(input, teacherController, academicController);
             AcademicMenu academicMenu = new AcademicMenu(input,
                     new EnrollmentMenu(input, academicController, studentController),
-                    new GradeMenu(input, gradeController, academicController, studentController, teacherController));
+                    new GradeMenu(input, gradeController, academicController, studentController, teacherController),
+                    new AttendanceMenu(input, attendanceController, academicController, studentController,
+                            teacherController));
             new MainMenu(input, studentMenu, academicMenu, teacherMenu).run();
         } catch (ConfigurationException | DatabaseException e) {
             Console.error(e.getMessage());
