@@ -10,15 +10,18 @@ public class MainMenu extends BaseMenu {
     private final TeacherMenu teacherMenu;
     private final ExtracurricularMenu extracurricularMenu;
     private final FinanceMenu financeMenu;
+    private final ResourcesMenu resourcesMenu;
 
     public MainMenu(InputReader input, StudentMenu studentMenu, AcademicMenu academicMenu, TeacherMenu teacherMenu,
-                    ExtracurricularMenu extracurricularMenu, FinanceMenu financeMenu) {
+                    ExtracurricularMenu extracurricularMenu, FinanceMenu financeMenu,
+                    ResourcesMenu resourcesMenu) {
         super(input);
         this.studentMenu = studentMenu;
         this.academicMenu = academicMenu;
         this.teacherMenu = teacherMenu;
         this.extracurricularMenu = extracurricularMenu;
         this.financeMenu = financeMenu;
+        this.resourcesMenu = resourcesMenu;
     }
 
     public void run() {
@@ -51,6 +54,9 @@ public class MainMenu extends BaseMenu {
                     break;
                 case 5:
                     financeMenu.run();
+                    break;
+                case 6:
+                    resourcesMenu.run();
                     break;
                 case 8:
                     exit = true;

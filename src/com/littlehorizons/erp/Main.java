@@ -7,8 +7,10 @@ import com.littlehorizons.erp.controller.ClubController;
 import com.littlehorizons.erp.controller.EventController;
 import com.littlehorizons.erp.controller.GradeController;
 import com.littlehorizons.erp.controller.GuardianController;
+import com.littlehorizons.erp.controller.LoanController;
 import com.littlehorizons.erp.controller.PaymentConceptController;
 import com.littlehorizons.erp.controller.PaymentController;
+import com.littlehorizons.erp.controller.ResourceController;
 import com.littlehorizons.erp.controller.StudentController;
 import com.littlehorizons.erp.controller.TeacherController;
 import com.littlehorizons.erp.controller.TeachingRules;
@@ -23,8 +25,11 @@ import com.littlehorizons.erp.dao.EventParticipantDao;
 import com.littlehorizons.erp.dao.GradeDao;
 import com.littlehorizons.erp.dao.GuardianDao;
 import com.littlehorizons.erp.dao.InvoiceDao;
+import com.littlehorizons.erp.dao.LoanDao;
 import com.littlehorizons.erp.dao.PaymentConceptDao;
 import com.littlehorizons.erp.dao.PaymentDao;
+import com.littlehorizons.erp.dao.ResourceCategoryDao;
+import com.littlehorizons.erp.dao.ResourceDao;
 import com.littlehorizons.erp.dao.StudentDao;
 import com.littlehorizons.erp.dao.StudentGuardianDao;
 import com.littlehorizons.erp.dao.SubjectDao;
@@ -44,8 +49,11 @@ import com.littlehorizons.erp.view.ExtracurricularMenu;
 import com.littlehorizons.erp.view.FinanceMenu;
 import com.littlehorizons.erp.view.GradeMenu;
 import com.littlehorizons.erp.view.InputReader;
+import com.littlehorizons.erp.view.InventoryMenu;
+import com.littlehorizons.erp.view.LoanMenu;
 import com.littlehorizons.erp.view.MainMenu;
 import com.littlehorizons.erp.view.PaymentConceptMenu;
+import com.littlehorizons.erp.view.ResourcesMenu;
 import com.littlehorizons.erp.view.StudentMenu;
 import com.littlehorizons.erp.view.TeacherMenu;
 
@@ -85,6 +93,9 @@ public class Main {
             ClubMembershipDao clubMembershipDao = new ClubMembershipDao(database);
             EventDao eventDao = new EventDao(database);
             EventParticipantDao eventParticipantDao = new EventParticipantDao(database);
+            ResourceCategoryDao resourceCategoryDao = new ResourceCategoryDao(database);
+            ResourceDao resourceDao = new ResourceDao(database);
+            LoanDao loanDao = new LoanDao(database);
 
             StudentController studentController = new StudentController(studentDao, studentGuardianDao);
             GuardianController guardianController = new GuardianController(guardianDao, studentGuardianDao);
@@ -102,6 +113,8 @@ public class Main {
             ClubController clubController = new ClubController(clubDao, clubMembershipDao, studentDao, teacherDao);
             EventController eventController = new EventController(eventDao, eventParticipantDao, studentDao,
                     teacherDao);
+            ResourceController resourceController = new ResourceController(resourceDao, resourceCategoryDao);
+            LoanController loanController = new LoanController(loanDao, resourceDao, studentDao, teacherDao);
 
             InputReader input = new InputReader(new Scanner(System.in, StandardCharsets.UTF_8));
             StudentMenu studentMenu = new StudentMenu(input, studentController, guardianController);
@@ -116,8 +129,10 @@ public class Main {
                     new EventMenu(input, eventController, studentController, teacherController));
             FinanceMenu financeMenu = new FinanceMenu(input, paymentController, conceptController, studentController,
                     guardianController, new PaymentConceptMenu(input, conceptController));
-            new MainMenu(input, studentMenu, academicMenu, teacherMenu, extracurricularMenu,
-                    financeMenu).run();
+            ResourcesMenu resourcesMenu = new ResourcesMenu(input, new InventoryMenu(input, resourceController),
+                    new LoanMenu(input, loanController, resourceController, studentController, teacherController));
+            new MainMenu(input, studentMenu, academicMenu, teacherMenu, extracurricularMenu, financeMenu,
+                    resourcesMenu).run();
         } catch (ConfigurationException | DatabaseException e) {
             Console.error(e.getMessage());
         } catch (NoSuchElementException e) {
