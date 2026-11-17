@@ -11,10 +11,11 @@ public class MainMenu extends BaseMenu {
     private final ExtracurricularMenu extracurricularMenu;
     private final FinanceMenu financeMenu;
     private final ResourcesMenu resourcesMenu;
+    private final ReportMenu reportMenu;
 
     public MainMenu(InputReader input, StudentMenu studentMenu, AcademicMenu academicMenu, TeacherMenu teacherMenu,
                     ExtracurricularMenu extracurricularMenu, FinanceMenu financeMenu,
-                    ResourcesMenu resourcesMenu) {
+                    ResourcesMenu resourcesMenu, ReportMenu reportMenu) {
         super(input);
         this.studentMenu = studentMenu;
         this.academicMenu = academicMenu;
@@ -22,6 +23,7 @@ public class MainMenu extends BaseMenu {
         this.extracurricularMenu = extracurricularMenu;
         this.financeMenu = financeMenu;
         this.resourcesMenu = resourcesMenu;
+        this.reportMenu = reportMenu;
     }
 
     public void run() {
@@ -58,11 +60,11 @@ public class MainMenu extends BaseMenu {
                 case 6:
                     resourcesMenu.run();
                     break;
+                case 7:
+                    reportMenu.run();
+                    break;
                 case 8:
                     exit = true;
-                    break;
-                default:
-                    Console.info("Este módulo estará disponible próximamente.");
                     break;
             }
         }

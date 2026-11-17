@@ -10,6 +10,7 @@ import com.littlehorizons.erp.controller.GuardianController;
 import com.littlehorizons.erp.controller.LoanController;
 import com.littlehorizons.erp.controller.PaymentConceptController;
 import com.littlehorizons.erp.controller.PaymentController;
+import com.littlehorizons.erp.controller.ReportController;
 import com.littlehorizons.erp.controller.ResourceController;
 import com.littlehorizons.erp.controller.StudentController;
 import com.littlehorizons.erp.controller.TeacherController;
@@ -39,6 +40,7 @@ import com.littlehorizons.erp.exception.ConfigurationException;
 import com.littlehorizons.erp.exception.DatabaseException;
 import com.littlehorizons.erp.util.AppLogger;
 import com.littlehorizons.erp.util.InvoiceFileWriter;
+import com.littlehorizons.erp.util.ReportFileWriter;
 import com.littlehorizons.erp.view.AcademicMenu;
 import com.littlehorizons.erp.view.AttendanceMenu;
 import com.littlehorizons.erp.view.ClubMenu;
@@ -53,6 +55,7 @@ import com.littlehorizons.erp.view.InventoryMenu;
 import com.littlehorizons.erp.view.LoanMenu;
 import com.littlehorizons.erp.view.MainMenu;
 import com.littlehorizons.erp.view.PaymentConceptMenu;
+import com.littlehorizons.erp.view.ReportMenu;
 import com.littlehorizons.erp.view.ResourcesMenu;
 import com.littlehorizons.erp.view.StudentMenu;
 import com.littlehorizons.erp.view.TeacherMenu;
@@ -115,6 +118,9 @@ public class Main {
                     teacherDao);
             ResourceController resourceController = new ResourceController(resourceDao, resourceCategoryDao);
             LoanController loanController = new LoanController(loanDao, resourceDao, studentDao, teacherDao);
+            ReportController reportController = new ReportController(studentDao, teacherDao, gradeDao,
+                    enrollmentDao, academicRecordDao, attendanceDao, clubDao, paymentController, resourceController,
+                    loanController);
 
             InputReader input = new InputReader(new Scanner(System.in, StandardCharsets.UTF_8));
             StudentMenu studentMenu = new StudentMenu(input, studentController, guardianController);
@@ -132,7 +138,8 @@ public class Main {
             ResourcesMenu resourcesMenu = new ResourcesMenu(input, new InventoryMenu(input, resourceController),
                     new LoanMenu(input, loanController, resourceController, studentController, teacherController));
             new MainMenu(input, studentMenu, academicMenu, teacherMenu, extracurricularMenu, financeMenu,
-                    resourcesMenu).run();
+                    resourcesMenu, new ReportMenu(input, reportController,
+                    new ReportFileWriter(Paths.get("reports")))).run();
         } catch (ConfigurationException | DatabaseException e) {
             Console.error(e.getMessage());
         } catch (NoSuchElementException e) {
