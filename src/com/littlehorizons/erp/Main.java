@@ -76,6 +76,7 @@ public class Main {
         try {
             DatabaseConnection database = DatabaseConnection.getInstance();
             verifyConnection(database);
+            AppLogger.getInstance().info("Application started. Database connection verified.");
 
             StudentDao studentDao = new StudentDao(database);
             GuardianDao guardianDao = new GuardianDao(database);
@@ -140,6 +141,7 @@ public class Main {
             new MainMenu(input, studentMenu, academicMenu, teacherMenu, extracurricularMenu, financeMenu,
                     resourcesMenu, new ReportMenu(input, reportController,
                     new ReportFileWriter(Paths.get("reports")))).run();
+            AppLogger.getInstance().info("Application closed by the user.");
         } catch (ConfigurationException | DatabaseException e) {
             Console.error(e.getMessage());
         } catch (NoSuchElementException e) {

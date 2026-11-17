@@ -16,6 +16,7 @@ import com.littlehorizons.erp.model.enums.LoanStatus;
 import com.littlehorizons.erp.model.enums.StudentStatus;
 import com.littlehorizons.erp.model.enums.TeacherStatus;
 import com.littlehorizons.erp.util.Validator;
+import com.littlehorizons.erp.util.AppLogger;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -106,6 +107,8 @@ public class LoanController {
         loan.setExpectedReturnDate(expectedReturn);
         loan.setNotes(cleanNotes);
         loanDao.lend(loan, LocalDate.now(), MAX_OPEN_LOANS);
+        AppLogger.getInstance().info("Loan registered: resource id " + resourceId + " lent to " + type + " id "
+                + borrowerId + " (loan id " + loan.getLoanId() + ").");
         return loanDao.findById(type, loan.getLoanId());
     }
 
@@ -127,6 +130,8 @@ public class LoanController {
             throw new BusinessRuleException("Ese préstamo ya fue devuelto.");
         }
         loanDao.giveBack(type, loanId, returnDate, buildReturnNotes(loan, returnDate, damaged, cleanNotes), damaged);
+        AppLogger.getInstance().info("Loan returned: " + type + " loan id " + loanId
+                + (damaged ? " (damaged, resource sent to maintenance)." : "."));
         return loanDao.findById(type, loanId);
     }
 

@@ -1,5 +1,6 @@
 package com.littlehorizons.erp.view;
 
+import com.littlehorizons.erp.exception.DatabaseException;
 import com.littlehorizons.erp.exception.ErpException;
 import com.littlehorizons.erp.exception.ValidationException;
 import com.littlehorizons.erp.model.enums.AcademicPeriod;
@@ -35,8 +36,13 @@ public abstract class BaseMenu {
         try {
             action.run();
         } catch (OperationCancelledException e) {
+            AppLogger.getInstance().info("Operation cancelled by the user.");
             Console.info("Operación cancelada. No se guardó ningún cambio.");
         } catch (ErpException e) {
+            // database errors were already logged where they happened; the rest are rejected actions
+            if (!(e instanceof DatabaseException)) {
+                AppLogger.getInstance().warn("Operation rejected: " + e.getClass().getSimpleName() + ".");
+            }
             Console.error(e.getMessage());
         } catch (NoSuchElementException e) {
             throw e; // the input stream was closed: let the application end

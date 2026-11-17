@@ -44,6 +44,7 @@ public class ReportFileWriter {
         try {
             Files.createDirectories(directory);
             Files.write(file, lines, StandardCharsets.UTF_8);
+            AppLogger.getInstance().info("Report file written: " + file + ".");
             return file;
         } catch (IOException e) {
             AppLogger.getInstance().error("Could not write report file " + file + ".", e);
