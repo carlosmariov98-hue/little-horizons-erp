@@ -5,6 +5,8 @@ import com.littlehorizons.erp.controller.AcademicController;
 import com.littlehorizons.erp.controller.AttendanceController;
 import com.littlehorizons.erp.controller.GradeController;
 import com.littlehorizons.erp.controller.GuardianController;
+import com.littlehorizons.erp.controller.PaymentConceptController;
+import com.littlehorizons.erp.controller.PaymentController;
 import com.littlehorizons.erp.controller.StudentController;
 import com.littlehorizons.erp.controller.TeacherController;
 import com.littlehorizons.erp.controller.TeachingRules;
@@ -14,6 +16,9 @@ import com.littlehorizons.erp.dao.AttendanceDao;
 import com.littlehorizons.erp.dao.EnrollmentDao;
 import com.littlehorizons.erp.dao.GradeDao;
 import com.littlehorizons.erp.dao.GuardianDao;
+import com.littlehorizons.erp.dao.InvoiceDao;
+import com.littlehorizons.erp.dao.PaymentConceptDao;
+import com.littlehorizons.erp.dao.PaymentDao;
 import com.littlehorizons.erp.dao.StudentDao;
 import com.littlehorizons.erp.dao.StudentGuardianDao;
 import com.littlehorizons.erp.dao.SubjectDao;
@@ -22,17 +27,21 @@ import com.littlehorizons.erp.dao.TeacherDao;
 import com.littlehorizons.erp.exception.ConfigurationException;
 import com.littlehorizons.erp.exception.DatabaseException;
 import com.littlehorizons.erp.util.AppLogger;
+import com.littlehorizons.erp.util.InvoiceFileWriter;
 import com.littlehorizons.erp.view.AcademicMenu;
 import com.littlehorizons.erp.view.AttendanceMenu;
 import com.littlehorizons.erp.view.Console;
 import com.littlehorizons.erp.view.EnrollmentMenu;
+import com.littlehorizons.erp.view.FinanceMenu;
 import com.littlehorizons.erp.view.GradeMenu;
 import com.littlehorizons.erp.view.InputReader;
 import com.littlehorizons.erp.view.MainMenu;
+import com.littlehorizons.erp.view.PaymentConceptMenu;
 import com.littlehorizons.erp.view.StudentMenu;
 import com.littlehorizons.erp.view.TeacherMenu;
 
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
@@ -60,6 +69,9 @@ public class Main {
             SubjectEnrollmentDao subjectEnrollmentDao = new SubjectEnrollmentDao(database);
             AcademicRecordDao academicRecordDao = new AcademicRecordDao(database);
             AttendanceDao attendanceDao = new AttendanceDao(database);
+            PaymentConceptDao conceptDao = new PaymentConceptDao(database);
+            PaymentDao paymentDao = new PaymentDao(database);
+            InvoiceDao invoiceDao = new InvoiceDao(database);
 
             StudentController studentController = new StudentController(studentDao, studentGuardianDao);
             GuardianController guardianController = new GuardianController(guardianDao, studentGuardianDao);
@@ -71,6 +83,9 @@ public class Main {
                     subjectEnrollmentDao);
             AttendanceController attendanceController = new AttendanceController(attendanceDao, studentDao,
                     subjectDao, subjectEnrollmentDao, teachingRules);
+            PaymentConceptController conceptController = new PaymentConceptController(conceptDao);
+            PaymentController paymentController = new PaymentController(paymentDao, invoiceDao, conceptDao,
+                    studentDao, studentGuardianDao, guardianDao, new InvoiceFileWriter(Paths.get("invoices")));
 
             InputReader input = new InputReader(new Scanner(System.in, StandardCharsets.UTF_8));
             StudentMenu studentMenu = new StudentMenu(input, studentController, guardianController);
@@ -80,7 +95,9 @@ public class Main {
                     new GradeMenu(input, gradeController, academicController, studentController, teacherController),
                     new AttendanceMenu(input, attendanceController, academicController, studentController,
                             teacherController));
-            new MainMenu(input, studentMenu, academicMenu, teacherMenu).run();
+            FinanceMenu financeMenu = new FinanceMenu(input, paymentController, conceptController, studentController,
+                    guardianController, new PaymentConceptMenu(input, conceptController));
+            new MainMenu(input, studentMenu, academicMenu, teacherMenu, financeMenu).run();
         } catch (ConfigurationException | DatabaseException e) {
             Console.error(e.getMessage());
         } catch (NoSuchElementException e) {
