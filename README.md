@@ -373,22 +373,9 @@ RESUMEN GENERAL 2026
   Préstamos vencidos                   11
 ```
 
-**Factura generada (`invoices/factura_000589.txt`)**
 
 ```
-================================================================
-            COLEGIO LITTLE HORIZONS
-      FACTURA ELECTRÓNICA DE VENTA (SIMULADA)
-================================================================
-Colegio Internacional Little Horizons S.A.S.
-NIT: 900123456-8        Régimen: Responsable de IVA
-...
-Factura No.:      LH-000589
-...
-TOTAL PAGADO                                   $ 500.000,00
-================================================================
-CUFE (SHA-384):
-...
+
 ```
 
 **Factura generada (`invoices/factura_000589.txt`)**
