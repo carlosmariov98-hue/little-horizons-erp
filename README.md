@@ -283,6 +283,11 @@ Estudiantes por estado, género y grado; rendimiento de un grado (promedios, niv
 
 Menú principal agrupado por módulo, cada dato se vuelve a pedir hasta que sea válido, mensajes de éxito y error claros, listas numeradas para elegir datos relacionados y la palabra **`cancelar`** en cualquier pregunta para abandonar la operación y volver al menú.
 
+### Exportador de materias por profesor
+
+Funcionalidad independiente del menú, en el paquete `test` (`modelo`, `controlador`, `vista`). Se ejecuta directamente con la clase `test.vista.ExportadorMateriasProfesorMain`, sin pasar por el menú principal.
+
+Pide el ID de un profesor, valida que exista y que tenga materias asignadas en el año académico 2025, y genera en la raíz del proyecto el archivo `materias_profesor_[id]_2025.txt` con los datos del profesor y la lista de sus materias (código, nombre y grado), alineada en columnas. El año se define en una sola constante (`TeacherSubjectsController.ACADEMIC_YEAR`).
 ---
 
 ## 11. Manejo de Errores y Logs
